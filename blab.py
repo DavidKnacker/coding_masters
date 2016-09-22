@@ -16,16 +16,22 @@ connection = pyhdb.connect(
     password="8U2i0a16"
 )
 cursor = connection.cursor()
-while True:
-    sock.sendto(bytes(MESSAGE, "utf-8"), (UDP_IP, UDP_PORT))
-    sock.connect((UDP_IP, UDP_PORT))
-    currentTime = time.time()
-    data, addr = sock.recvfrom(1024)  # buffer size is 1024 bytes
-    print(data)
-    #while currentTime-time.time() < 10:
-     #   data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-      #  cursor.execute("""INSERT INTO FCC_DATA.CULTIVATION ( FID, ELEVATION, DISTANCE, HEADING, GPS_QUALITY, ENGINE_LOAD,
-       #                   ENGINE_POWER, FUEL_USED, SPEED, FIELD_ID, DATETIME, POINT_X, POINT_Y, HASH_CODE )
-        #                  VALUES """ +str(data))
 
+while True:
+    # allData = []
+    sock.sendto(bytes(MESSAGE, "utf-8"), (UDP_IP, UDP_PORT))
+    # currentTime = time.time()
+    # while time.time() - currentTime < 10:
+    sock.connect((UDP_IP, UDP_PORT))
+    data, addr = sock.recvfrom(1024)  # buffer size is 1024 bytes
+    data = data.decode('utf-8').replace("\"","'")
+    # allData.append(data)
+    query = """INSERT INTO FCC_DATA.FURROWING VALUES ({data})""".format(data=data)
+    print(query)
+    cursor.execute(query)
+    print(cursor.rowcount)
+    #query = """INSERT INTO FCC_DATA.CULTIVATION VALUES {data}""".format(data=tuple(allData),)
+    #print(query)
+    #cursor.execute(query)
+    #print(cursor.rowcount)
 connection.close()
