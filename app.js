@@ -1,6 +1,7 @@
 var express = require('express');
 var app = express();
 var fs = require("fs");
+var path = require("path");
 
 var hdb    = require('hdb');
 var client = hdb.createClient({
@@ -17,6 +18,7 @@ client.connect(function (err) {
     return console.error('Connect error', err);
   }
 });
+app.use(express.static('public'));
 
 app.get('/task2', function (req, res) {
    fs.readFile( __dirname + "/" + "users.json", 'utf8', function (err, data) {
