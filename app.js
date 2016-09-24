@@ -135,6 +135,59 @@ app.get('/task8', function (req, res) {
       });
    });
 })
+app.get('/getAllCoordinates', function (req, res) {
+    query = `SELECT DISTINCT pos_x,pos_y,field_id FROM (
+              (SELECT point_x as pos_x, point_y as pos_y, field_id FROM FCC_DATA.CULTIVATION LIMIT 50000)
+            )`
+    console.log( query );
+    client.exec(query, function (err, rows) {
+      if (err) {
+        return console.error('Execute error:', err);
+      }
+      var points = []
+      for (var item in rows)
+      {
+        points.push({"field_id": String(rows[item]["FIELD_ID"]), "x": String(rows[item]["POS_X"]), "y": String(rows[item]["POS_Y"])})
+      }
+      res.end(JSON.stringify(points))
+    });
+})
+
+app.get('/getCornerCoordinates', function (req, res) {
+    query = `SELECT MAX(POINT_X) as max_x , MAX(POINT_Y)as max_y, MIN(POINT_X) as min_x , MIN(POINT_Y)as min_y, FIELD_ID FROM FCC_DATA.CULTIVATION GROUP BY FIELD_ID`
+    console.log( query );
+    client.exec(query, function (err, rows) {
+      if (err) {
+        return console.error('Execute error:', err);
+      }
+      var points = []
+      for (var item in rows)
+      {
+        points.push({"field_id": String(rows[item]["FIELD_ID"]), "x": String(rows[item]["POS_X"]), "y": String(rows[item]["POS_Y"])})
+      }
+      res.end(JSON.stringify(points))
+    });
+})
+app.get('/getCurrentMachines', function (req, res) {
+    timeStart = req.query.timeStart
+    timeEnd = req.query.timeEnd
+    query = `select  FIELD_ID, "DATETIME", SPEED, POINT_X as pos_x, POINT_Y as pos_y
+              from FCC_DATA.Cultivation
+              where "DATETIME" >= '2015-01-17 09:01:54' and "DATETIME" < '2015-01-17 09:01:55' ORDER BY DATETIME`
+    console.log( query );
+    client.exec(query, function (err, rows) {
+      if (err) {
+        return console.error('Execute error:', err);
+      }
+      var machines = []
+      for (var item in rows)
+      {
+        machines.push({"field_id": String(rows[item]["FIELD_ID"]), "x": String(rows[item]["POS_X"]), "y": String(rows[item]["POS_Y"])})
+      }
+      console.log(JSON.stringify(machines))
+      res.end(JSON.stringify(machines))
+    });
+})
 
 var server = app.listen(8080, function () {
    var host = server.address().address
