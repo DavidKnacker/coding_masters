@@ -1,4 +1,4 @@
-var mymap = L.map('mapid').setView([26.73,-80.5454275], 15);
+var mymap = L.map('mapid').setView([26.73,-80.5454275], 13);
 L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
       maxZoom: 18,
       attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors,' +
@@ -10,7 +10,7 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 
 window.onload = function() {
   $.ajax({
-    url: "/getAllCoordinates",
+    url: "/getCornerCoordinates",
     type: "get", //send it through get method
     data:{},
     success: function(response) {
@@ -18,13 +18,13 @@ window.onload = function() {
       console.log(points)
       colors = {}
       for (i in points) {
-        if (!colors[points[i].field_id])
-          colors[points[i].field_id] = "#" + Math.random().toString(16).slice(2,8);
-        var circle = L.circle([points[i].y, points[i].x], 20, {
-          color: colors[points[i].field_id],
-          fillColor: colors[points[i].field_id],
-          fillOpacity: 1
-        }).addTo(mymap);
+        var polygon = L.polygon([
+          [points[i].min_y, points[i].min_x],
+          [points[i].min_y, points[i].max_x],
+          [points[i].max_y, points[i].max_x],
+          [points[i].max_y, points[i].min_x],
+          [points[i].min_y, points[i].min_x]
+        ]).addTo(mymap);
       }
     },
     error: function(xhr) {
@@ -36,11 +36,17 @@ window.onload = function() {
     type: "get", //send it through get method
     data:{},
     success: function(response) {
+      var tractorIcon = L.icon({
+          iconUrl: '/images/tractor.png',
+          iconSize:     [25, 25], // size of the icon
+          iconAnchor:   [12, 12], // point of the icon which will correspond to marker's location
+          popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+      });
       var machines = JSON.parse(response)
       console.log(machines)
       colors = {}
       for (i in machines) {
-        var marker = L.marker([machines[i].y, machines[i].x]).addTo(mymap);
+        var marker = L.marker([machines[i].y, machines[i].x], {icon: tractorIcon}).addTo(mymap);
       }
     },
     error: function(xhr) {

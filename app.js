@@ -154,7 +154,7 @@ app.get('/getAllCoordinates', function (req, res) {
 })
 
 app.get('/getCornerCoordinates', function (req, res) {
-    query = `SELECT MAX(POINT_X) as max_x , MAX(POINT_Y)as max_y, MIN(POINT_X) as min_x , MIN(POINT_Y)as min_y, FIELD_ID FROM FCC_DATA.CULTIVATION GROUP BY FIELD_ID`
+    query = `SELECT MAX(POINT_X) as max_x , MAX(POINT_Y)as max_y, MIN(POINT_X) as min_x , MIN(POINT_Y)as min_y, FIELD_ID FROM ((SELECT POINT_X, POINT_Y, FIELD_ID FROM FCC_DATA.CULTIVATION ) UNION (SELECT POINT_X, POINT_Y, FIELD_ID FROM FCC_DATA.HARVEST) UNION (SELECT POINT_X, POINT_Y, FIELD_ID FROM FCC_DATA.FERTILIZER)) GROUP BY FIELD_ID`
     console.log( query );
     client.exec(query, function (err, rows) {
       if (err) {
@@ -163,17 +163,16 @@ app.get('/getCornerCoordinates', function (req, res) {
       var points = []
       for (var item in rows)
       {
-        points.push({"field_id": String(rows[item]["FIELD_ID"]), "x": String(rows[item]["POS_X"]), "y": String(rows[item]["POS_Y"])})
+        if (rows[item]["MAX_X"] - rows[item]["MIN_X"] < 0.06 && rows[item]["MAX_Y"] - rows[item]["MIN_Y"] < 0.06)
+        points.push({"field_id": String(rows[item]["FIELD_ID"]), "max_x": String(rows[item]["MAX_X"]), "max_y": String(rows[item]["MAX_Y"]), "min_x": String(rows[item]["MIN_X"]), "min_y": String(rows[item]["MIN_Y"])})
       }
       res.end(JSON.stringify(points))
     });
 })
 app.get('/getCurrentMachines', function (req, res) {
-    timeStart = req.query.timeStart
-    timeEnd = req.query.timeEnd
-    query = `select  FIELD_ID, "DATETIME", SPEED, POINT_X as pos_x, POINT_Y as pos_y
-              from FCC_DATA.Cultivation
-              where "DATETIME" >= '2015-01-17 09:01:54' and "DATETIME" < '2015-01-17 09:01:55' ORDER BY DATETIME`
+    query = `select  FIELD_ID, "DATETIME", SPEED, POINT_X as pos_x, POINT_Y as pos_y, DISTANCE, HEADING, GPS_QUALITY, ENGINE_LOAD, ENGINE_POWER, FUEL_USED
+            from FCC_DATA.Cultivation
+            where "DATETIME" >= '2014-11-19 21:22:21' and "DATETIME" < '2014-11-19 21:22:22' ORDER BY DATETIME`
     console.log( query );
     client.exec(query, function (err, rows) {
       if (err) {
@@ -182,6 +181,7 @@ app.get('/getCurrentMachines', function (req, res) {
       var machines = []
       for (var item in rows)
       {
+        if (String(rows[item]["FIELD_ID"]) != "27-S-2")
         machines.push({"field_id": String(rows[item]["FIELD_ID"]), "x": String(rows[item]["POS_X"]), "y": String(rows[item]["POS_Y"])})
       }
       console.log(JSON.stringify(machines))
